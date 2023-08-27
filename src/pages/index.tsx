@@ -2,6 +2,7 @@ import { SignOutButton, useUser } from "@clerk/nextjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { LoadingPage } from "~/components/loading";
 import { RouterOutputs, api } from "~/utils/api";
+import { useState } from "react";
 import { NextPage } from "next";
 import Image from "next/image";
 import Head from "next/head";
@@ -29,10 +30,29 @@ const PostView = (props: PostWithUser) => {
 
 const CreatePostWizard = () => {
   const { user } = useUser();
+
+  const [input, setInput] = useState("");
+  const ctx = api.useContext();
+
+  const { mutate, isLoading: isPosting } = api.posts.create.useMutation({
+    onSuccess: () => {
+      setInput("");
+      ctx.posts.getAll.invalidate();
+    }
+  });
+  
   if(!user) return null;
   return <div className="flex w-full gap-3">
     <Image className="rounded-full" width={56} height={56} src={user.imageUrl} alt="Profile Img"></Image>
-    <input placeholder="Type something" className="bg-transparent grow"></input>
+    <input 
+      placeholder="Type something"
+      className="bg-transparent grow"
+      type="text"
+      value={input}
+      onChange={(e) => setInput(e.target.value)}
+      disabled={isPosting}
+     />
+     <button onClick={()=> mutate({content: input})}>Post</button>
     <SignOutButton />
   </div>;
 };
