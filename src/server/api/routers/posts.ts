@@ -1,6 +1,6 @@
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import type { User } from "@clerk/nextjs/dist/types/server";
-import { auth, clerkClient } from "@clerk/nextjs";
+import { clerkClient } from "@clerk/nextjs";
 import { TRPCError } from "@trpc/server";
 
 const filterUserForClient = (user: User) => {

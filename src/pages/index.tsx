@@ -1,5 +1,6 @@
 import { SignOutButton, useUser } from "@clerk/nextjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { LoadingPage } from "~/components/loading";
 import { RouterOutputs, api } from "~/utils/api";
 import { NextPage } from "next";
 import Image from "next/image";
@@ -8,7 +9,7 @@ import dayjs from "dayjs";
 
 dayjs.extend(relativeTime);
 
-type PostWithUser = RouterOutputs["post"]["getAll"][number]
+type PostWithUser = RouterOutputs["posts"]["getAll"][number]
 const PostView = (props: PostWithUser) => {
   const { post, author } = props;
   return (          
@@ -36,13 +37,30 @@ const CreatePostWizard = () => {
   </div>;
 };
 
-const Home: NextPage = () => {
-  const { isSignedIn  } = useUser();
+const Feed = () => {
+  const { data, isLoading: postsLoading } = api.posts.getAll.useQuery();
 
-  const { data, isLoading } = api.post.getAll.useQuery();
-
-  if(isLoading ) return <div> Loading ... </div>;
+  if(postsLoading) return <LoadingPage/>;
+  
   if(!data) return <div> Its broken ... </div>;
+
+  return(           
+    <div>
+      {data?.map((fullPost) =>
+         <PostView {...fullPost} key={fullPost.post.id}/>
+      )}
+    </div>
+  )
+};
+
+const Home: NextPage = () => {
+  const { isSignedIn, isLoaded: userLoaded  } = useUser();
+
+  api.posts.getAll.useQuery();
+
+
+  if(!userLoaded) return <div/>;
+
   return (
     <div>
       <Head>
@@ -53,10 +71,9 @@ const Home: NextPage = () => {
         <div className="w-full h-full md:max-w-2xl border-slate-400 border-x">
         <div className="flex border-b border-slate-400 p-4">
             {!!isSignedIn && <CreatePostWizard/>}
-          </div>
-          <div>
-            {data?.map( (fullPost) => <PostView {...fullPost} key={fullPost.post.id}/>)}
-          </div>
+        </div>
+        <Feed></Feed>
+
         </div>
       </main>;
     </div>
